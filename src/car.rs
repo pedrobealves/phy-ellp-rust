@@ -37,7 +37,6 @@ pub struct Cart {
 
 impl Default for Cart {
     fn default() -> Self {
-
         Cart {
             R: 0.1,
             state: State::default(),
