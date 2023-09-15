@@ -5,6 +5,7 @@ use egui::{
     plot::{CoordinatesFormatter, Corner, HLine, Legend, Line, Plot, PlotBounds, PlotPoints},
     Align, Align2, Color32, Context, DragValue, Frame, Layout, Pos2, Slider, Vec2,
 };
+
 use macroquad::prelude::*;
 
 use crate::{
@@ -58,6 +59,7 @@ impl Graph {
     }
 
     pub fn draw(&self, ctx: &Context, clamp: f64) {
+
         egui::Window::new(self.title[0])
             .frame(Frame {
                 inner_margin: egui::Margin::same(0.),
@@ -83,8 +85,15 @@ impl Graph {
                     .allow_zoom(false)
                     .allow_scroll(false)
                     .allow_boxed_zoom(false)
-                    .show_x(false)
-                    .show_y(false)
+                    .show_x(true)
+                    .show_y(true)
+                    .label_formatter(|name, value| {
+                        if !name.is_empty() {
+                            format!("{}: {:.1}\nTempo: {:.1}s", name, value.y, value.x)
+                        } else {
+                            "".to_owned()
+                        }
+                    })
                     .coordinates_formatter(
                         Corner::LeftBottom,
                         CoordinatesFormatter::new(|&point, _| format!("y: {:.3}", point.y)),
@@ -207,10 +216,24 @@ pub fn draw_ui(w: f32, grid: f32, cart: &mut Cart, forceplt: &mut Graph, forcepl
             .movable(false)
             .collapsible(false)
             .show(ctx, |ui| {
-
+                ui.separator();
                 ui.with_layout(Layout::top_down(Align::Center), |ui| {
-                    ui.label(format!("Tempo: {:.2}", cart.state.th.abs()*100.0));
+                    ui.label(format!("Tempo: {:.2}", cart.state.th.abs()));
                     ui.label(format!("Posição: {:.2}", cart.state.x));
+                });
+                ui.separator();
+                ui.separator();
+                ui.with_layout(Layout::top_down(Align::Center), |ui| {
+                    ui.horizontal(|ui| {
+                        ui.add(
+                            DragValue::new(&mut cart.a)
+                                .clamp_range(-INFINITY..=INFINITY)
+                                .speed(1.),
+                        );
+                        ui.label("Aceleração (m/s^2)");
+                    });
+                    ui.separator();
+
                 });
 
             });
@@ -235,15 +258,6 @@ pub fn draw_ui(w: f32, grid: f32, cart: &mut Cart, forceplt: &mut Graph, forcepl
                             car::Integrator::RungeKutta4,
                             "MRUV",
                         );
-                    });
-                    ui.separator();
-                    ui.horizontal(|ui| {
-                        ui.add(
-                            DragValue::new(&mut cart.a)
-                                .clamp_range(0.0..=INFINITY)
-                                .speed(1.),
-                        );
-                        ui.label("Aceleração (m/s^2)");
                     });
                     ui.separator();
                     ui.add(
@@ -272,7 +286,7 @@ pub fn draw_ui(w: f32, grid: f32, cart: &mut Cart, forceplt: &mut Graph, forcepl
                     })
                 });
             });
-        forceplt.draw(ctx, cart.state.v.abs() as f64 * 100.0 + 10.0);
+        forceplt.draw(ctx, cart.state.v.abs() as f64 + 10.0);
         forceplt1.draw(ctx, cart.state.x.abs() as f64  + 10.0);
     });
     egui_macroquad::draw();

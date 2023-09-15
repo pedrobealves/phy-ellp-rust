@@ -1,5 +1,6 @@
 #![allow(non_snake_case)]
 
+use std::collections::LinkedList;
 use std::f64::consts::PI;
 
 use macroquad::prelude::*;
@@ -30,6 +31,8 @@ pub struct Cart {
     x0: f64,
     v0: f64,
     tr: f64,
+    state_history: LinkedList<State>,
+    tp: LinkedList<f64>,
 }
 
 impl Default for Cart {
@@ -46,30 +49,40 @@ impl Default for Cart {
             x0: 0.0,
             v0: 0.0,
             a: 2.0,
-            tr: 0.0
+            tr: 0.0,
+            state_history: LinkedList::new(),
+            tp: LinkedList::new(),
         }
     }
 }
 
 impl Cart {
     pub fn update(&mut self, dt: f64) {
-        self.camera.update(self.state.x, self.state.v, dt);
-            if (self.enable) {
-                let t = (macroquad::time::get_time() - self.tr) / 100.0;
+        self.camera.update(self.get_position() , self.state.v, dt);
+        let t = (macroquad::time::get_time() - self.tr ) / 100.0;
+        if self.enable {
                 let steps = self.steps;
                 let dt = dt / steps as f64;
-                println!("dt: {}", dt);
                 if is_key_down(KeyCode::Left) {
-                    self.a -= 0.1;
+                    self.a= self.a - 0.1;
                 } else if is_key_down(KeyCode::Right) {
-                    self.a += 0.1;
+                    self.a= self.a + 0.1;
                 }
                 self.state.update(self.a , t);
-            }
+                self.state_history.push_front(self.state.clone());
+        }
     }
 
     pub fn reset_timer(&mut self) {
         self.tr = macroquad::time::get_time();
+    }
+
+    pub fn get_position(&self) -> f64 {
+        self.state.x / 100.0
+    }
+
+    pub fn get_last_state(&self) -> Option<&State> {
+        self.state_history.iter().rev().last()
     }
 
     pub fn display(
@@ -81,11 +94,11 @@ impl Cart {
         depth: f32,
     ) {
         draw_line(-length, -depth, length, -depth, thickness, color);
-        let x = (self.state.x - self.camera.y) as f32 * self.ui_scale;
+        let x = (self.get_position() - self.camera.y) as f32 * self.ui_scale;
         let R = self.R as f32 * self.ui_scale;
         let (c, s) = (
-            (self.state.x / self.R).cos() as f32,
-            (self.state.x / self.R).sin() as f32,
+            (self.get_position() / self.R).cos() as f32,
+            (self.get_position() / self.R).sin() as f32,
         );
 
         let ticks = (9. / self.ui_scale) as i32;

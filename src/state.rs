@@ -20,11 +20,11 @@ impl State {
     }
 
     pub fn update(&mut self, a: f64, dt: f64) {
-        self.th = dt;
-        self.v = a*dt;
-        self.x += self.v * dt + 0.5 * a * dt.powi(2) as f64;
+        self.th = (dt * 100.0);
+        self.v = a*self.th;
+        println!("v: {}", self.v);
+        self.x = (0.5 * a * self.th.powi(2))as f64;
         println!("x: {}", self.x);
-        println!("y: {}", self.x);
     }
 
 }

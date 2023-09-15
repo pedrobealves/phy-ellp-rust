@@ -56,9 +56,11 @@ async fn main() {
         }
 
         if (cart.enable){
-            forceplt.update([cart.state.v*100.0, cart.a].to_vec());
-            forceplt1.update([cart.state.x].to_vec());
+            forceplt.update([cart.get_last_state().unwrap().v, cart.a]
+                .to_vec());
+            forceplt1.update([cart.get_last_state().unwrap().x].to_vec());
         }
+
 
         clear_background(back_color);
         draw_blue_grid(grid, Color::from_hex(0xf6de26), 0.001, 3, 0.003);
@@ -72,12 +74,12 @@ async fn main() {
                 } else {
                     "+"
                 },
-                cart.state.v.abs()*100.0
+                cart.state.v.abs()
             ),
             vec2(0., screen_height() / screen_width() - 0.75 * grid),
             0.08,
             cart.state.v as f32,
-            20.,
+            100.,
             0.8,
             font,
             14.,
@@ -86,7 +88,7 @@ async fn main() {
         draw_speedometer(
             &format!(
                 "Aceleração ({}) {:.2}",
-                if cart.state.v.is_sign_negative() {
+                if cart.a.is_sign_negative() {
                     "-"
                 } else {
                     "+"
