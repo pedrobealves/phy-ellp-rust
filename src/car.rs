@@ -26,19 +26,16 @@ pub struct Cart {
     pub steps: i32,
     pub R: f64,
     pub camera: CameraDynamics,
-    g: f64,
-    x: f64,
+    pub a: f64,
     x0: f64,
     v0: f64,
-    v: f64,
-    a: f64,
+    tr: f64,
 }
 
 impl Default for Cart {
     fn default() -> Self {
 
         Cart {
-            g: 9.80665,
             R: 0.1,
             state: State::default(),
             ui_scale: 0.3,
@@ -46,11 +43,10 @@ impl Default for Cart {
             enable: false,
             integrator: Integrator::default(),
             camera: CameraDynamics::default(),
-            x: 0.0,
             x0: 0.0,
             v0: 0.0,
-            v: 0.0,
-            a: 0.0,
+            a: 2.0,
+            tr: 0.0
         }
     }
 }
@@ -58,19 +54,22 @@ impl Default for Cart {
 impl Cart {
     pub fn update(&mut self, dt: f64) {
         self.camera.update(self.state.x, self.state.v, dt);
-        if (self.enable){
-            let steps = self.steps;
-            let dt = dt / steps as f64;
+            if (self.enable) {
+                let t = (macroquad::time::get_time() - self.tr) / 100.0;
+                let steps = self.steps;
+                let dt = dt / steps as f64;
+                println!("dt: {}", dt);
                 if is_key_down(KeyCode::Left) {
-                    self.a = self.a - 1.0;
-                    print!("a: {}\n", self.a);
+                    self.a -= 0.1;
                 } else if is_key_down(KeyCode::Right) {
-                    self.a = self.a + 1.0;
-                    print!("a: {}\n", self.a);
+                    self.a += 0.1;
                 }
+                self.state.update(self.a , t);
+            }
+    }
 
-                self.state.update((0.0,self.a,0.0,0.0), dt);
-        }
+    pub fn reset_timer(&mut self) {
+        self.tr = macroquad::time::get_time();
     }
 
     pub fn display(

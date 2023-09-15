@@ -29,16 +29,16 @@ async fn main() {
     let font = load_ttf_font_from_bytes(include_bytes!("../Ubuntu-Regular.ttf")).unwrap();
     setup_theme();
     let mut forceplt = Graph::new(
-        &["Force", "Thrust"],
+        &["Movimentos", "Velocidade", "Aceleração"],
         pos2((0.5 - 2. * grid) * w_init, 0.),
         egui::vec2(1.5, 1.) * grid * w_init,
-        None,
+        Some([Color32::WHITE, Color32::LIGHT_GREEN].to_vec()),
     );
     let mut forceplt1 = Graph::new(
-        &["PID", "Integral", "Derivative", "Error"],
+        &["POS", "Posição"],
         pos2((0.5 + 0.5 * grid) * w_init, 0.),
         egui::vec2(1.5, 1.) * grid * w_init,
-        Some([Color32::WHITE, Color32::LIGHT_GREEN, Color32::LIGHT_RED].to_vec()),
+        Some([Color32::LIGHT_RED].to_vec()),
     );
     next_frame().await;
     let back_color = Color::from_hex(0xf1ba0a);
@@ -55,29 +55,15 @@ async fn main() {
             cart.update(get_frame_time() as f64);
         }
 
+        if (cart.enable){
+            forceplt.update([cart.state.v*100.0, cart.a].to_vec());
+            forceplt1.update([cart.state.x].to_vec());
+        }
+
         clear_background(back_color);
         draw_blue_grid(grid, Color::from_hex(0xf6de26), 0.001, 3, 0.003);
 
         cart.display(back_color, WHITE, 0.006, 6. * grid, 3. * grid);
-        draw_speedometer(
-            &format!(
-                "Aceleração ({}) {:.2}",
-                if cart.state.th.is_sign_negative() {
-                    "-"
-                } else {
-                    "+"
-                },
-                cart.state.th.abs()
-            ),
-            vec2(0., screen_height() / screen_width() - 0.75 * grid),
-            0.08,
-            cart.state.w as f32,
-            9.,
-            0.8,
-            font,
-            14.,
-            false,
-        );
         draw_speedometer(
             &format!(
                 "Velocidade ({}) {:.2}",
@@ -86,11 +72,30 @@ async fn main() {
                 } else {
                     "+"
                 },
-                cart.state.v.abs()
+                cart.state.v.abs()*100.0
+            ),
+            vec2(0., screen_height() / screen_width() - 0.75 * grid),
+            0.08,
+            cart.state.v as f32,
+            20.,
+            0.8,
+            font,
+            14.,
+            true,
+        );
+        draw_speedometer(
+            &format!(
+                "Aceleração ({}) {:.2}",
+                if cart.state.v.is_sign_negative() {
+                    "-"
+                } else {
+                    "+"
+                },
+                cart.a.abs()
             ),
             vec2(0., screen_height() / screen_width() - 1.75 * grid),
             0.08,
-            cart.state.v as f32,
+            cart.a as f32,
             20.,
             0.8,
             font,
