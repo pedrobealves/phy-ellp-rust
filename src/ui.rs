@@ -5,14 +5,12 @@ use egui::{
     plot::{CoordinatesFormatter, Corner, HLine, Legend, Line, Plot, PlotBounds, PlotPoints},
     Align, Align2, Color32, Context, DragValue, Frame, Layout, Pos2, Slider, Vec2,
 };
+use macroquad::math::f32;
 
 use macroquad::prelude::*;
 
-use crate::{
-    camera::CameraDynamics,
-    car::{self, Cart},
-    state::State,
-};
+use crate::{camera::CameraDynamics, car::{self, Cart}, report, state::State};
+use crate::report::Report;
 
 pub struct Graph {
     title: &'static [&'static str],
@@ -94,10 +92,6 @@ impl Graph {
                             "".to_owned()
                         }
                     })
-                    .coordinates_formatter(
-                        Corner::LeftBottom,
-                        CoordinatesFormatter::new(|&point, _| format!("y: {:.3}", point.y)),
-                    )
                     .legend(Legend::default().position(egui::plot::Corner::RightBottom))
                     .show(ui, |plot_ui| {
                         plot_ui.set_plot_bounds(PlotBounds::from_min_max(
@@ -201,7 +195,7 @@ pub fn draw_speedometer(
         WHITE,
     )
 }
-pub fn draw_ui(w: f32, grid: f32, cart: &mut Cart, forceplt: &mut Graph, forceplt1: &mut Graph) {
+pub fn draw_ui(w: f32, grid: f32, cart: &mut Cart, forceplt: &mut Graph, forceplt1: &mut Graph, mut report: &mut Report) {
     egui_macroquad::ui(|ctx| {
         //ctx.set_debug_on_hover(true);
         ctx.set_pixels_per_point(screen_width() / w);
@@ -232,8 +226,23 @@ pub fn draw_ui(w: f32, grid: f32, cart: &mut Cart, forceplt: &mut Graph, forcepl
                         );
                         ui.label("Aceleração (m/s^2)");
                     });
+                    ui.horizontal(|ui| {
+                        ui.add(
+                            DragValue::new(&mut cart.v0)
+                                .clamp_range(-INFINITY..=INFINITY)
+                                .speed(1.),
+                        );
+                        ui.label("Velocidade inicial (m/s)");
+                    });
+                    ui.horizontal(|ui| {
+                        ui.add(
+                            DragValue::new(&mut cart.x0)
+                                .clamp_range(-INFINITY..=INFINITY)
+                                .speed(1.),
+                        );
+                        ui.label("Posição inicial (m)");
+                    });
                     ui.separator();
-
                 });
 
             });
@@ -269,6 +278,7 @@ pub fn draw_ui(w: f32, grid: f32, cart: &mut Cart, forceplt: &mut Graph, forcepl
                     ui.separator();
                     ui.horizontal(|ui| {
                         let enable = cart.enable;
+                        cart.enable();
                         ui.label("Controle do sistema:");
                         ui.toggle_value(
                             &mut cart.enable,
@@ -283,7 +293,17 @@ pub fn draw_ui(w: f32, grid: f32, cart: &mut Cart, forceplt: &mut Graph, forcepl
                             cart.reset_timer();
                             cart.camera = CameraDynamics::default();
                         };
-                    })
+                    });
+                    ui.horizontal(|ui| {
+                        let enable = cart.enable;
+                        if ui.button("Gerar Relatório").clicked() {
+
+                            if let Err(error) = report.create(cart.get_state_history(), cart) {
+                                eprintln!("create_xlsx error: {error}");
+                            }
+                        };
+                    });
+
                 });
             });
         forceplt.draw(ctx, cart.state.v.abs() as f64 + 10.0);

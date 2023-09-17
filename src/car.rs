@@ -1,11 +1,11 @@
 #![allow(non_snake_case)]
 
 use std::collections::LinkedList;
-use std::f64::consts::PI;
 
 use macroquad::prelude::*;
 
-use crate::{camera::CameraDynamics, state::State};
+use crate::{camera::CameraDynamics, state::State, timer::Timer};
+
 #[derive(PartialEq, Eq)]
 pub enum Integrator {
     Euler,
@@ -28,11 +28,12 @@ pub struct Cart {
     pub R: f64,
     pub camera: CameraDynamics,
     pub a: f64,
-    x0: f64,
-    v0: f64,
+    pub x0: f64,
+    pub v0: f64,
     tr: f64,
     state_history: LinkedList<State>,
     tp: LinkedList<f64>,
+    timer: Timer,
 }
 
 impl Default for Cart {
@@ -51,6 +52,7 @@ impl Default for Cart {
             tr: 0.0,
             state_history: LinkedList::new(),
             tp: LinkedList::new(),
+            timer: Timer::new(0.0),
         }
     }
 }
@@ -58,21 +60,23 @@ impl Default for Cart {
 impl Cart {
     pub fn update(&mut self, dt: f64) {
         self.camera.update(self.get_position() , self.state.v, dt);
-        let t = (macroquad::time::get_time() - self.tr ) / 100.0;
         if self.enable {
-                let steps = self.steps;
+            self.timer.start();
+            let t = self.timer.elapsed() / 100.0;
+            self.state.update(self.a , self.v0, self.x0, t);
+            self.state_history.push_back(self.state.clone());
+            let steps = self.steps;
                 let dt = dt / steps as f64;
                 if is_key_down(KeyCode::Left) {
                     self.a= self.a - 0.1;
                 } else if is_key_down(KeyCode::Right) {
                     self.a= self.a + 0.1;
                 }
-                self.state.update(self.a , t);
-                self.state_history.push_front(self.state.clone());
         }
     }
 
     pub fn reset_timer(&mut self) {
+        self.timer.reset();
         self.tr = macroquad::time::get_time();
     }
 
@@ -81,7 +85,18 @@ impl Cart {
     }
 
     pub fn get_last_state(&self) -> Option<&State> {
-        self.state_history.iter().rev().last()
+        self.state_history.iter().last()
+    }
+
+    pub fn enable(&mut self){
+        match self.enable {
+            true => self.timer.resume(),
+            false => self.timer.pause(),
+        }
+    }
+
+    pub fn get_state_history(&self) -> &LinkedList<State> {
+        &self.state_history
     }
 
     pub fn display(

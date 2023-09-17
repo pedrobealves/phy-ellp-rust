@@ -3,11 +3,15 @@ use car::Cart;
 use egui::{pos2, Color32};
 use macroquad::prelude::*;
 use ui::{draw_blue_grid, draw_speedometer, draw_ui, draw_vingette};
+use crate::report::Report;
+
 mod camera;
 mod car;
 mod state;
 mod theme;
 mod ui;
+mod report;
+mod timer;
 
 fn window_conf() -> Conf {
     Conf {
@@ -21,13 +25,14 @@ fn window_conf() -> Conf {
 }
 #[macroquad::main(window_conf)]
 async fn main() {
-
     let grid = 0.15;
     let w_init = 1280.;
     let mut cart = Cart::default();
+    let report:Report = Report::default();
     let vingette = Texture2D::from_file_with_format(include_bytes!("../vingette.png"), None);
     let font = load_ttf_font_from_bytes(include_bytes!("../Ubuntu-Regular.ttf")).unwrap();
     setup_theme();
+    let mut report = Report::default();
     let mut forceplt = Graph::new(
         &["Movimentos", "Velocidade", "Aceleração"],
         pos2((0.5 - 2. * grid) * w_init, 0.),
@@ -104,7 +109,7 @@ async fn main() {
             14.,
             true,
         );
-        draw_ui(w_init, grid, &mut cart, &mut forceplt, &mut forceplt1);
+        draw_ui(w_init, grid, &mut cart, &mut forceplt, &mut forceplt1, &mut report);
         draw_vingette(vingette);
         next_frame().await;
     }
