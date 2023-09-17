@@ -1,4 +1,4 @@
-use macroquad::prelude::*;
+use macroquad::prelude::get_time;
 
 #[derive(PartialEq)]
 pub struct Timer {

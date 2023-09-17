@@ -30,9 +30,7 @@ pub struct Cart {
     pub a: f64,
     pub x0: f64,
     pub v0: f64,
-    tr: f64,
     state_history: LinkedList<State>,
-    tp: LinkedList<f64>,
     timer: Timer,
 }
 
@@ -46,13 +44,11 @@ impl Default for Cart {
             enable: false,
             integrator: Integrator::default(),
             camera: CameraDynamics::default(),
+            state_history: LinkedList::new(),
+            timer: Timer::new(0.0),
             x0: 0.0,
             v0: 0.0,
             a: 2.0,
-            tr: 0.0,
-            state_history: LinkedList::new(),
-            tp: LinkedList::new(),
-            timer: Timer::new(0.0),
         }
     }
 }
@@ -77,7 +73,6 @@ impl Cart {
 
     pub fn reset_timer(&mut self) {
         self.timer.reset();
-        self.tr = macroquad::time::get_time();
     }
 
     pub fn get_position(&self) -> f64 {

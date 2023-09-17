@@ -195,7 +195,7 @@ pub fn draw_speedometer(
         WHITE,
     )
 }
-pub fn draw_ui(w: f32, grid: f32, cart: &mut Cart, forceplt: &mut Graph, forceplt1: &mut Graph, mut report: &mut Report) {
+pub fn draw_ui(w: f32, grid: f32, cart: &mut Cart, forceplt: &mut Graph, forceplt1: &mut Graph, report: &mut Report) {
     egui_macroquad::ui(|ctx| {
         //ctx.set_debug_on_hover(true);
         ctx.set_pixels_per_point(screen_width() / w);
