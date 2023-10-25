@@ -7,14 +7,14 @@ use macroquad::prelude::*;
 use crate::{camera::CameraDynamics, state::State, timer::Timer};
 
 #[derive(PartialEq, Eq)]
-pub enum Integrator {
-    Euler,
-    RungeKutta4,
+pub enum Movement {
+    MRU,
+    MRUV,
 }
 
-impl Default for Integrator {
+impl Default for Movement {
     fn default() -> Self {
-        Self::RungeKutta4
+        Self::MRUV
     }
 }
 
@@ -23,7 +23,7 @@ pub struct Cart {
     pub ui_scale: f32,
     pub enable: bool,
     pub state: State,
-    pub integrator: Integrator,
+    pub movement: Movement,
     pub steps: i32,
     pub R: f64,
     pub camera: CameraDynamics,
@@ -42,7 +42,7 @@ impl Default for Cart {
             ui_scale: 0.3,
             steps: 1,
             enable: false,
-            integrator: Integrator::default(),
+            movement: Movement::default(),
             camera: CameraDynamics::default(),
             state_history: LinkedList::new(),
             timer: Timer::new(0.0),
@@ -59,15 +59,18 @@ impl Cart {
         if self.enable {
             self.timer.start();
             let t = self.timer.elapsed() / 100.0;
-            self.state.update(self.a , self.v0, self.x0, t);
+            if let Movement::MRU = self.movement {
+                self.a = 0.0;
+            }
+            self.state.update(self.a , self.v0, self.x0, t, &self.movement);
             self.state_history.push_back(self.state.clone());
             let steps = self.steps;
-                let dt = dt / steps as f64;
-                if is_key_down(KeyCode::Left) {
-                    self.a= self.a - 0.1;
-                } else if is_key_down(KeyCode::Right) {
-                    self.a= self.a + 0.1;
-                }
+            let dt = dt / steps as f64;
+            if is_key_down(KeyCode::Left) {
+                self.a= self.a - 0.1;
+            } else if is_key_down(KeyCode::Right) {
+                self.a= self.a + 0.1;
+            }
         }
     }
 

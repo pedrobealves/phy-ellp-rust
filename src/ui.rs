@@ -10,15 +10,17 @@ use macroquad::math::f32;
 use macroquad::prelude::*;
 
 use crate::{camera::CameraDynamics, car::{self, Cart}, report, state::State};
+use crate::car::{ Movement};
 use crate::report::Report;
 
 pub struct Graph {
     title: &'static [&'static str],
     pos: Pos2,
     size: Vec2,
-    history: Vec<VecDeque<f32>>,
+    history: Vec<VecDeque<(f32,f64)>>,
     hsize: usize,
     colors: Vec<Color32>,
+    dt: f64,
 }
 
 impl Graph {
@@ -39,6 +41,7 @@ impl Graph {
             hsize: 100,
             colors: colors
                 .unwrap_or_else(|| (0..title.len() - 1).map(|_| Color32::WHITE).collect()),
+            dt: 0.0,
         }
     }
 
@@ -46,18 +49,18 @@ impl Graph {
         self.pos.y = y;
     }
 
-    pub fn update(&mut self, track: Vec<f64>) {
+    pub fn update(&mut self, track: Vec<f64>, dt: f64) {
         assert!(track.len() == self.history.len());
         for (i, &v) in track.iter().enumerate() {
-            self.history[i].push_back(v as f32);
-            if self.history[i].len() > self.hsize {
+            self.history[i].push_back((v as f32, dt as f64));
+            /*if self.history[i].len() > self.hsize {
                 self.history[i].pop_front();
-            }
+            }*/
         }
     }
 
-    pub fn draw(&self, ctx: &Context, clamp: f64) {
-
+    pub fn draw(&self, ctx: &Context, clamp: f64, clamp_y: f64)
+    {
         egui::Window::new(self.title[0])
             .frame(Frame {
                 inner_margin: egui::Margin::same(0.),
@@ -77,6 +80,7 @@ impl Graph {
                 Plot::new("example")
                     .width(self.size.x)
                     .height(self.size.y)
+                    .include_x(0.0)
                     .show_axes([false, false])
                     .show_background(false)
                     .allow_drag(false)
@@ -92,11 +96,15 @@ impl Graph {
                             "".to_owned()
                         }
                     })
+                    .coordinates_formatter(
+                        Corner::LeftBottom,
+                        CoordinatesFormatter::new(|&point, _| format!("x: {:.3}", point.x)),
+                    )
                     .legend(Legend::default().position(egui::plot::Corner::RightBottom))
                     .show(ui, |plot_ui| {
                         plot_ui.set_plot_bounds(PlotBounds::from_min_max(
                             [0., -clamp * 1.1],
-                            [self.hsize as f64, clamp * 1.1],
+                            [clamp_y, clamp * 1.1],
                         ));
                         plot_ui.hline(HLine::new(0.).color(Color32::WHITE).width(1.));
                         for i in 0..self.history.len() {
@@ -105,7 +113,7 @@ impl Graph {
                                     self.history[i]
                                         .iter()
                                         .enumerate()
-                                        .map(|(i, &y)| [i as f64, y as f64])
+                                        .map(|(i, &(y, x))| [x as f64, y as f64]) // Aqui estamos desestruturando a tupla (v, dt)
                                         .collect::<PlotPoints>(),
                                 )
                                 .width(2.)
@@ -218,14 +226,16 @@ pub fn draw_ui(w: f32, grid: f32, cart: &mut Cart, forceplt: &mut Graph, forcepl
                 ui.separator();
                 ui.separator();
                 ui.with_layout(Layout::top_down(Align::Center), |ui| {
-                    ui.horizontal(|ui| {
-                        ui.add(
-                            DragValue::new(&mut cart.a)
-                                .clamp_range(-INFINITY..=INFINITY)
-                                .speed(1.),
-                        );
-                        ui.label("Aceleração (m/s^2)");
-                    });
+                    if cart.movement == Movement::MRUV {
+                        ui.horizontal(|ui| {
+                            ui.add(
+                                DragValue::new(&mut cart.a)
+                                    .clamp_range(-INFINITY..=INFINITY)
+                                    .speed(1.),
+                            );
+                            ui.label("Aceleração (m/s^2)");
+                        });
+                    }
                     ui.horizontal(|ui| {
                         ui.add(
                             DragValue::new(&mut cart.v0)
@@ -234,6 +244,7 @@ pub fn draw_ui(w: f32, grid: f32, cart: &mut Cart, forceplt: &mut Graph, forcepl
                         );
                         ui.label("Velocidade inicial (m/s)");
                     });
+
                     ui.horizontal(|ui| {
                         ui.add(
                             DragValue::new(&mut cart.x0)
@@ -261,10 +272,10 @@ pub fn draw_ui(w: f32, grid: f32, cart: &mut Cart, forceplt: &mut Graph, forcepl
                     ui.separator();
                     ui.horizontal(|ui| {
                         ui.label("Movimento: ");
-                        ui.selectable_value(&mut cart.integrator, car::Integrator::Euler, "MRU");
+                        ui.selectable_value(&mut cart.movement, car::Movement::MRU, "MRU");
                         ui.selectable_value(
-                            &mut cart.integrator,
-                            car::Integrator::RungeKutta4,
+                            &mut cart.movement,
+                            car::Movement::MRUV,
                             "MRUV",
                         );
                     });
@@ -291,6 +302,9 @@ pub fn draw_ui(w: f32, grid: f32, cart: &mut Cart, forceplt: &mut Graph, forcepl
                         if ui.button("Reiniciar").clicked() {
                             cart.state = State::default();
                             cart.reset_timer();
+                            forceplt.history[0].clear();
+                            forceplt.history[1].clear();
+                            forceplt1.history[0].clear();
                             cart.camera = CameraDynamics::default();
                         };
                     });
@@ -306,8 +320,8 @@ pub fn draw_ui(w: f32, grid: f32, cart: &mut Cart, forceplt: &mut Graph, forcepl
 
                 });
             });
-        forceplt.draw(ctx, cart.state.v.abs() as f64 + 10.0);
-        forceplt1.draw(ctx, cart.state.x.abs() as f64  + 10.0);
+        forceplt.draw(ctx, cart.state.v.abs() as f64 + 10.0, cart.state.th);
+        forceplt1.draw(ctx, cart.state.x.abs() as f64  + 10.0, cart.state.th);
     });
     egui_macroquad::draw();
 }

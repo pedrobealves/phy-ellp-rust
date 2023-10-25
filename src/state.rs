@@ -1,4 +1,5 @@
 use std::f64::consts::PI;
+use crate::car::Movement;
 
 #[derive(Clone, Copy, PartialEq)]
 
@@ -19,11 +20,19 @@ impl State {
         State { x, v, th }
     }
 
-    pub fn update(&mut self, a: f64, v0: f64, x0:f64 , dt: f64) {
+    pub fn update(&mut self, a: f64, v0: f64, x0:f64 , dt: f64, movement: &Movement) {
         self.th = (dt * 100.0);
-        self.v = v0 + a*self.th;
+        match movement {
+            Movement::MRU => {
+                self.v = v0;
+                self.x = x0 + v0*self.th;
+            },
+            Movement::MRUV => {
+                self.v = v0 + a*self.th;
+                self.x =  x0 + v0*self.th  + (0.5 * a * self.th.powi(2))as f64;
+            },
+        }
         //println!("v: {}", self.v);
-        self.x =  x0 + v0*self.th  + (0.5 * a * self.th.powi(2))as f64;
         //println!("x: {}", self.x);
     }
 

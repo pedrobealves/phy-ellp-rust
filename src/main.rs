@@ -3,6 +3,7 @@ use car::Cart;
 use egui::{pos2, Color32};
 use macroquad::prelude::*;
 use ui::{draw_blue_grid, draw_speedometer, draw_ui, draw_vingette};
+use crate::car::Movement;
 use crate::report::Report;
 
 mod camera;
@@ -12,7 +13,6 @@ mod theme;
 mod ui;
 mod report;
 mod timer;
-
 fn window_conf() -> Conf {
     Conf {
         window_title: "Cart".to_string(),
@@ -62,8 +62,8 @@ async fn main() {
 
         if (cart.enable){
             forceplt.update([cart.get_last_state().unwrap().v, cart.a]
-                .to_vec());
-            forceplt1.update([cart.get_last_state().unwrap().x].to_vec());
+                .to_vec(), cart.get_last_state().unwrap().th);
+            forceplt1.update([cart.get_last_state().unwrap().x].to_vec(), cart.get_last_state().unwrap().th);
         }
 
 
@@ -90,25 +90,27 @@ async fn main() {
             14.,
             true,
         );
-        draw_speedometer(
-            &format!(
-                "Aceleração ({}) {:.2}",
-                if cart.a.is_sign_negative() {
-                    "-"
-                } else {
-                    "+"
-                },
-                cart.a.abs()
-            ),
-            vec2(0., screen_height() / screen_width() - 1.75 * grid),
-            0.08,
-            cart.a as f32,
-            20.,
-            0.8,
-            font,
-            14.,
-            true,
-        );
+        if cart.movement == Movement::MRUV {
+            draw_speedometer(
+                &format!(
+                    "Aceleração ({}) {:.2}",
+                    if cart.a.is_sign_negative() {
+                        "-"
+                    } else {
+                        "+"
+                    },
+                    cart.a.abs()
+                ),
+                vec2(0., screen_height() / screen_width() - 1.75 * grid),
+                0.08,
+                cart.a as f32,
+                20.,
+                0.8,
+                font,
+                14.,
+                true,
+            );
+        }
         draw_ui(w_init, grid, &mut cart, &mut forceplt, &mut forceplt1, &mut report);
         draw_vingette(vingette);
         next_frame().await;
