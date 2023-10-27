@@ -19,24 +19,24 @@ impl Default for Movement {
 }
 
 #[derive(PartialEq)]
-pub struct Cart {
-    pub ui_scale: f32,
-    pub enable: bool,
-    pub state: State,
-    pub movement: Movement,
-    pub steps: i32,
-    pub R: f64,
-    pub camera: CameraDynamics,
-    pub a: f64,
-    pub x0: f64,
-    pub v0: f64,
-    state_history: LinkedList<State>,
-    timer: Timer,
+pub struct Car {
+    pub ui_scale: f32, //Escala de tamanho da UI
+    pub enable: bool, //Habilita a simulação
+    pub state: State, //Estado atual do carrinho
+    pub movement: Movement, //Tipo de movimento
+    pub steps: i32, //Quantidade de passos por frame
+    pub R: f64, //Raio da roda
+    pub camera: CameraDynamics, //Dinâmica da câmera
+    pub a: f64, //Aceleração
+    pub x0: f64, //Posição inicial
+    pub v0: f64, //Velocidade inicial
+    state_history: LinkedList<State>, // Histórico de estados
+    timer: Timer, //Timer
 }
 
-impl Default for Cart {
+impl Default for Car {
     fn default() -> Self {
-        Cart {
+        Car {
             R: 0.1,
             state: State::default(),
             ui_scale: 0.3,
@@ -53,7 +53,7 @@ impl Default for Cart {
     }
 }
 
-impl Cart {
+impl Car {
     pub fn update(&mut self, dt: f64) {
         self.camera.update(self.get_position() , self.state.v, dt);
         if self.enable {
@@ -142,7 +142,7 @@ impl Cart {
         );
 
         let (w, h) = (R * 10., R * 3.5);
-        // cart
+        // car
         draw_rectangle_lines(x - 0.5 * w, -depth + 2. * R, w, h, thickness * 2., color);
 
         // wheels

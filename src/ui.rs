@@ -9,7 +9,7 @@ use macroquad::math::f32;
 
 use macroquad::prelude::*;
 
-use crate::{camera::CameraDynamics, car::{self, Cart}, report, state::State};
+use crate::{camera::CameraDynamics, car::{self, Car}, report, state::State};
 use crate::car::{ Movement};
 use crate::report::Report;
 
@@ -203,7 +203,7 @@ pub fn draw_speedometer(
         WHITE,
     )
 }
-pub fn draw_ui(w: f32, grid: f32, cart: &mut Cart, forceplt: &mut Graph, forceplt1: &mut Graph, report: &mut Report) {
+pub fn draw_ui(w: f32, grid: f32, car: &mut Car, forceplt: &mut Graph, forceplt1: &mut Graph, report: &mut Report) {
     egui_macroquad::ui(|ctx| {
         //ctx.set_debug_on_hover(true);
         ctx.set_pixels_per_point(screen_width() / w);
@@ -220,16 +220,16 @@ pub fn draw_ui(w: f32, grid: f32, cart: &mut Cart, forceplt: &mut Graph, forcepl
             .show(ctx, |ui| {
                 ui.separator();
                 ui.with_layout(Layout::top_down(Align::Center), |ui| {
-                    ui.label(format!("Tempo: {:.2}", cart.state.th.abs()));
-                    ui.label(format!("Posição: {:.2}", cart.state.x));
+                    ui.label(format!("Tempo: {:.2}", car.state.th.abs()));
+                    ui.label(format!("Posição: {:.2}", car.state.x));
                 });
                 ui.separator();
                 ui.separator();
                 ui.with_layout(Layout::top_down(Align::Center), |ui| {
-                    if cart.movement == Movement::MRUV {
+                    if car.movement == Movement::MRUV {
                         ui.horizontal(|ui| {
                             ui.add(
-                                DragValue::new(&mut cart.a)
+                                DragValue::new(&mut car.a)
                                     .clamp_range(-INFINITY..=INFINITY)
                                     .speed(1.),
                             );
@@ -238,7 +238,7 @@ pub fn draw_ui(w: f32, grid: f32, cart: &mut Cart, forceplt: &mut Graph, forcepl
                     }
                     ui.horizontal(|ui| {
                         ui.add(
-                            DragValue::new(&mut cart.v0)
+                            DragValue::new(&mut car.v0)
                                 .clamp_range(-INFINITY..=INFINITY)
                                 .speed(1.),
                         );
@@ -247,7 +247,7 @@ pub fn draw_ui(w: f32, grid: f32, cart: &mut Cart, forceplt: &mut Graph, forcepl
 
                     ui.horizontal(|ui| {
                         ui.add(
-                            DragValue::new(&mut cart.x0)
+                            DragValue::new(&mut car.x0)
                                 .clamp_range(-INFINITY..=INFINITY)
                                 .speed(1.),
                         );
@@ -272,27 +272,27 @@ pub fn draw_ui(w: f32, grid: f32, cart: &mut Cart, forceplt: &mut Graph, forcepl
                     ui.separator();
                     ui.horizontal(|ui| {
                         ui.label("Movimento: ");
-                        ui.selectable_value(&mut cart.movement, car::Movement::MRU, "MRU");
+                        ui.selectable_value(&mut car.movement, car::Movement::MRU, "MRU");
                         ui.selectable_value(
-                            &mut cart.movement,
+                            &mut car.movement,
                             car::Movement::MRUV,
                             "MRUV",
                         );
                     });
                     ui.separator();
                     ui.add(
-                        Slider::new(&mut cart.ui_scale, 0.03..=0.6)
+                        Slider::new(&mut car.ui_scale, 0.03..=0.6)
                             .custom_formatter(|n, _| format!("{:.2}", n / 0.3))
                             .custom_parser(|s| s.parse::<f64>().map(|v| v * 0.3).ok())
                             .text("Tamanho"),
                     );
                     ui.separator();
                     ui.horizontal(|ui| {
-                        let enable = cart.enable;
-                        cart.enable();
+                        let enable = car.enable;
+                        car.enable();
                         ui.label("Controle do sistema:");
                         ui.toggle_value(
-                            &mut cart.enable,
+                            &mut car.enable,
                             if enable {
                                 "PAUSAR"
                             } else {
@@ -300,19 +300,19 @@ pub fn draw_ui(w: f32, grid: f32, cart: &mut Cart, forceplt: &mut Graph, forcepl
                             },
                         );
                         if ui.button("Reiniciar").clicked() {
-                            cart.state = State::default();
-                            cart.reset_timer();
+                            car.state = State::default();
+                            car.reset_timer();
                             forceplt.history[0].clear();
                             forceplt.history[1].clear();
                             forceplt1.history[0].clear();
-                            cart.camera = CameraDynamics::default();
+                            car.camera = CameraDynamics::default();
                         };
                     });
                     ui.horizontal(|ui| {
-                        let enable = cart.enable;
+                        let enable = car.enable;
                         if ui.button("Gerar Relatório").clicked() {
 
-                            if let Err(error) = report.create(cart.get_state_history(), cart) {
+                            if let Err(error) = report.create(car.get_state_history(), car) {
                                 eprintln!("create_xlsx error: {error}");
                             }
                         };
@@ -320,8 +320,8 @@ pub fn draw_ui(w: f32, grid: f32, cart: &mut Cart, forceplt: &mut Graph, forcepl
 
                 });
             });
-        forceplt.draw(ctx, cart.state.v.abs() as f64 + 10.0, cart.state.th);
-        forceplt1.draw(ctx, cart.state.x.abs() as f64  + 10.0, cart.state.th);
+        forceplt.draw(ctx, car.state.v.abs() as f64 + 10.0, car.state.th);
+        forceplt1.draw(ctx, car.state.x.abs() as f64  + 10.0, car.state.th);
     });
     egui_macroquad::draw();
 }
