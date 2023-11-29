@@ -81,14 +81,14 @@ impl Graph {
                     .width(self.size.x)
                     .height(self.size.y)
                     .include_x(0.0)
+                    .show_x(true)
+                    .show_y(true)
                     .show_axes([false, false])
                     .show_background(false)
                     .allow_drag(false)
                     .allow_zoom(false)
                     .allow_scroll(false)
                     .allow_boxed_zoom(false)
-                    .show_x(true)
-                    .show_y(true)
                     .label_formatter(|name, value| {
                         if !name.is_empty() {
                             format!("{}: {:.1}\nTempo: {:.1}s", name, value.y, value.x)
@@ -98,7 +98,7 @@ impl Graph {
                     })
                     .coordinates_formatter(
                         Corner::LeftBottom,
-                        CoordinatesFormatter::new(|&point, _| format!("x: {:.3}", point.x)),
+                        CoordinatesFormatter::new(|&point, _| format!("x: {:.3}, y: {:.3}", point.x, point.y)),
                     )
                     .legend(Legend::default().position(egui::plot::Corner::RightBottom))
                     .show(ui, |plot_ui| {

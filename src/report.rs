@@ -19,7 +19,7 @@ impl Default for Report {
 
 impl Report {
     pub fn create(&mut self, states: &LinkedList<State>, car: &Car) -> Result<(),Box<dyn Error>> {
-
+        /*
         // Create some formats to use in the worksheet.
         let bold_format = Format::new().set_bold();
         let decimal_format = Format::new().set_num_format("0.000");
@@ -55,7 +55,7 @@ impl Report {
 
         // Save the file to disk.
         self.workbook.save("relatorio.xlsx")?;
-
+*/
         Ok(())
     }
 }
