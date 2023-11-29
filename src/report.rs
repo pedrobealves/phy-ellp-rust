@@ -5,21 +5,17 @@ use crate::car::Car;
 use crate::state::State;
 
 
-pub struct Report {
-    workbook: Workbook
-}
+pub struct Report {}
 
 impl Default for Report {
     fn default() -> Self {
-        Report {
-            workbook: Workbook::new()
-        }
+        Report {}
     }
 }
 
 impl Report {
     pub fn create(&mut self, states: &LinkedList<State>, car: &Car) -> Result<(),Box<dyn Error>> {
-        /*
+        /*let workbook = Workbook::new();
         // Create some formats to use in the worksheet.
         let bold_format = Format::new().set_bold();
         let decimal_format = Format::new().set_num_format("0.000");
@@ -55,7 +51,7 @@ impl Report {
 
         // Save the file to disk.
         self.workbook.save("relatorio.xlsx")?;
-*/
+        */
         Ok(())
     }
 }
