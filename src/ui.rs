@@ -305,6 +305,7 @@ pub fn draw_ui(w: f32, grid: f32, car: &mut Car, forceplt: &mut Graph, forceplt1
                             forceplt.history[0].clear();
                             forceplt.history[1].clear();
                             forceplt1.history[0].clear();
+                            car.reset_state_history();
                             car.camera = CameraDynamics::default();
                         };
                     });

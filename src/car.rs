@@ -97,6 +97,10 @@ impl Car {
         &self.state_history
     }
 
+    pub fn reset_state_history(&mut self) {
+        self.state_history.clear();
+    }
+
     pub fn display(
         &self,
         back_color: Color,

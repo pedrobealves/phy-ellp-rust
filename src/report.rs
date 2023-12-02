@@ -15,7 +15,8 @@ impl Default for Report {
 
 impl Report {
     pub fn create(&mut self, states: &LinkedList<State>, car: &Car) -> Result<(),Box<dyn Error>> {
-        /*let workbook = Workbook::new();
+        let mut workbook = Workbook::new();
+        let mut index_row:u32 = 0;
         // Create some formats to use in the worksheet.
         let bold_format = Format::new().set_bold();
         let decimal_format = Format::new().set_num_format("0.000");
@@ -25,7 +26,7 @@ impl Report {
             .set_align(FormatAlign::Center);
 
         // Add a worksheet to the workbook.
-        let worksheet = self.workbook.add_worksheet();
+        let worksheet = workbook.add_worksheet();
 
         // Set the column width for clarity.
         worksheet.set_column_width(0, 22)?;
@@ -47,11 +48,34 @@ impl Report {
             //println!("v: {}", state.v);
             worksheet.write_with_format(row_num, 2, state.th, &decimal_format).unwrap();
             //println!("th: {}", state.th);
+            index_row = index as u32;
         });
 
+
+        let mut chart = Chart::new(ChartType::Line);
+
+        let mut chart_2 = Chart::new(ChartType::Line);
+
+        // Configure the data series for the chart.
+        chart
+        .add_series()
+        .set_name(("Sheet1", 0, 0))
+        .set_categories(("Sheet1", 1, 2, index_row, 2))
+        .set_values(("Sheet1", 1, 0, index_row, 0));
+
+        chart_2
+        .add_series()
+        .set_name(("Sheet1", 0, 1))
+        .set_categories(("Sheet1", 1, 2, index_row, 2)) 
+        .set_values(("Sheet1", 1, 1, index_row, 1));        
+
+        // Add the chart to the worksheet.
+        worksheet.insert_chart(1, 5, &chart)?;
+        worksheet.insert_chart(20, 5, &chart_2)?;
+
         // Save the file to disk.
-        self.workbook.save("relatorio.xlsx")?;
-        */
+        workbook.save("relatorio.xlsx")?;
+    
         Ok(())
     }
 }
