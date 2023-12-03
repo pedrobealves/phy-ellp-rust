@@ -1,9 +1,8 @@
-use std::collections::LinkedList;
-use std::error::Error;
-use rust_xlsxwriter::*;
 use crate::car::Car;
 use crate::state::State;
-
+use rust_xlsxwriter::*;
+use std::collections::LinkedList;
+use std::error::Error;
 
 pub struct Report {}
 
@@ -14,9 +13,9 @@ impl Default for Report {
 }
 
 impl Report {
-    pub fn create(&mut self, states: &LinkedList<State>, car: &Car) -> Result<(),Box<dyn Error>> {
+    pub fn create(&mut self, states: &LinkedList<State>, car: &Car) -> Result<(), Box<dyn Error>> {
         let mut workbook = Workbook::new();
-        let mut index_row:u32 = 0;
+        let mut index_row: u32 = 0;
         // Create some formats to use in the worksheet.
         let bold_format = Format::new().set_bold();
         let decimal_format = Format::new().set_num_format("0.000");
@@ -33,24 +32,39 @@ impl Report {
         worksheet.set_column_width(1, 22)?;
         worksheet.set_column_width(2, 22)?;
 
-        worksheet.write_with_format( 0, 0,"Posição (x)", &bold_format )?;
-        worksheet.write_with_format( 0, 1,"Velocidade (v)", &bold_format )?;
-        worksheet.write_with_format( 0, 2,"Tempo (t)", &bold_format )?;
-        worksheet.write_with_format( 0, 3,"Aceleração (a)", &bold_format )?;
+        worksheet.write_with_format(0, 0, "Posição (x)", &bold_format)?;
+        worksheet.write_with_format(0, 1, "Velocidade (v)", &bold_format)?;
+        worksheet.write_with_format(0, 2, "Tempo (t)", &bold_format)?;
+        worksheet.write_with_format(0, 3, "Aceleração (a)", &bold_format)?;
+        worksheet.write_with_format(2, 3, "Posição inicial (x0)", &bold_format)?;
+        worksheet.write_with_format(4, 3, "Velocidade inicial (v0)", &bold_format)?;
 
-        worksheet.write_with_format(0, 3, car.a, &decimal_format).unwrap();
+        worksheet
+            .write_with_format(1, 3, car.a, &decimal_format)
+            .unwrap();
+        worksheet
+            .write_with_format(3, 3, car.x0, &decimal_format)
+            .unwrap();
+        worksheet
+            .write_with_format(5, 3, car.v0, &decimal_format)
+            .unwrap();
 
         states.iter().enumerate().for_each(|(index, state)| {
-            let row_num:RowNum = (index + 1) as RowNum;
-            worksheet.write_with_format(row_num, 0, state.x, &decimal_format).unwrap();
+            let row_num: RowNum = (index + 1) as RowNum;
+            worksheet
+                .write_with_format(row_num, 0, state.x, &decimal_format)
+                .unwrap();
             //println!("x: {}", state.x);
-            worksheet.write_with_format(row_num, 1, state.v, &decimal_format).unwrap();
+            worksheet
+                .write_with_format(row_num, 1, state.v, &decimal_format)
+                .unwrap();
             //println!("v: {}", state.v);
-            worksheet.write_with_format(row_num, 2, state.th, &decimal_format).unwrap();
+            worksheet
+                .write_with_format(row_num, 2, state.th, &decimal_format)
+                .unwrap();
             //println!("th: {}", state.th);
             index_row = index as u32;
         });
-
 
         let mut chart = Chart::new(ChartType::Line);
 
@@ -58,16 +72,16 @@ impl Report {
 
         // Configure the data series for the chart.
         chart
-        .add_series()
-        .set_name(("Sheet1", 0, 0))
-        .set_categories(("Sheet1", 1, 2, index_row, 2))
-        .set_values(("Sheet1", 1, 0, index_row, 0));
+            .add_series()
+            .set_name(("Sheet1", 0, 0))
+            .set_categories(("Sheet1", 1, 2, index_row, 2))
+            .set_values(("Sheet1", 1, 0, index_row, 0));
 
         chart_2
-        .add_series()
-        .set_name(("Sheet1", 0, 1))
-        .set_categories(("Sheet1", 1, 2, index_row, 2)) 
-        .set_values(("Sheet1", 1, 1, index_row, 1));        
+            .add_series()
+            .set_name(("Sheet1", 0, 1))
+            .set_categories(("Sheet1", 1, 2, index_row, 2))
+            .set_values(("Sheet1", 1, 1, index_row, 1));
 
         // Add the chart to the worksheet.
         worksheet.insert_chart(1, 5, &chart)?;
@@ -75,7 +89,7 @@ impl Report {
 
         // Save the file to disk.
         workbook.save("relatorio.xlsx")?;
-    
+
         Ok(())
     }
 }
